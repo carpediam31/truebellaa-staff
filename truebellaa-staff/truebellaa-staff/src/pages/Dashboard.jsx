@@ -29,7 +29,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader title={`Welcome, ${staff?.name?.split(' ')[0] || 'there'}`} />
+      <PageHeader title="Dashboard" />
       <div className="content">
         <div className="stat-grid">
           {stats.products !== null && <StatCard label="Product variants" value={stats.products} />}
@@ -54,7 +54,7 @@ export default function Dashboard() {
         <div className="card">
           <div className="card-head"><h2>Your access</h2></div>
           <p style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.7 }}>
-            You're signed in as <b>{staff?.email}</b>. Use the left sidebar to reach the sections you
+            You're logged in as <b>{staff?.email}</b>. Use the left sidebar to reach the sections you
             have permission for — Admins can grant or change access under <b>Staff &amp; Roles</b>.
           </p>
         </div>

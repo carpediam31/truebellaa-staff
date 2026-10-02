@@ -21,7 +21,7 @@ export default function Login() {
       await login(email.trim(), password);
       navigate(location.state?.from?.pathname || '/', { replace: true });
     } catch (ex) {
-      setErr(ex.message || 'Could not sign in.');
+      setErr(ex.message || 'Could not log in.');
     } finally {
       setBusy(false);
     }
@@ -32,14 +32,14 @@ export default function Login() {
       <div className="auth-brand">
         <div className="logo">True<strong>Bellaa</strong></div>
         <p>Staff console for the Admin, Operations Manager and Marketing &amp; Sales teams.
-           Sign in with the login your Admin gave you.</p>
+           Login with the login your Admin gave you.</p>
         <div className="tag">
           <span>Admin</span><span>Manager</span><span>Sales</span>
         </div>
       </div>
       <div className="auth-form-wrap">
         <form className="auth-form" onSubmit={onSubmit}>
-          <h2>Staff sign in</h2>
+          <h2>Staff log in</h2>
           <p className="sub">Use your work email and the password your Admin set up.</p>
           {err && <div className="error-box">{err}</div>}
           <div className="field">
@@ -53,11 +53,11 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? 'Logging in…' : 'Login'}
           </button>
           <p className="hint">
             New to the team? Staff accounts aren't self-service — ask an <b>Admin</b> to create
-            one for you from <b>Staff &amp; Roles → Add Staff</b> after they sign in.
+            one for you from <b>Staff &amp; Roles → Add Staff</b> after they log in.
           </p>
         </form>
       </div>

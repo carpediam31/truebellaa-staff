@@ -108,7 +108,7 @@ export default function Users() {
           </div>
           <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
             Staff can't sign themselves up — create their login here, give them the email and
-            password, and they can sign in right away at the Login page.
+            password, and they can log in right away at the Login page.
           </p>
           <DataTable columns={columns} rows={users} keyField="public_id"
                     emptyText={loading ? 'Loading…' : 'No staff accounts yet.'} />

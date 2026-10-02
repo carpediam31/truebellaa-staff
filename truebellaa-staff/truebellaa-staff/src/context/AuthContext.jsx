@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { api, getAccessToken, setTokens, clearTokens } from '../api.js';
+import { api, getAccessToken, getRefreshToken, setTokens, clearTokens } from '../api.js';
 
 const AuthContext = createContext(null);
 
@@ -9,13 +9,24 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState('');
 
   const loadMe = useCallback(async () => {
-    if (!getAccessToken()) { setStaff(null); setLoading(false); return; }
+    // An access token can be absent or expired while the (much longer-lived)
+    // refresh token is still good, so don't give up before trying it.
+    if (!getAccessToken() && !getRefreshToken()) {
+      setStaff(null); setLoading(false); return;
+    }
     try {
       const me = await api.me();
       setStaff(me);
-    } catch {
-      clearTokens();
-      setStaff(null);
+    } catch (e) {
+      // Only a definitive auth rejection should log the user out. A network
+      // blip or a 5xx (e.g. the API restarting) used to wipe the tokens here,
+      // which is why a backend restart forced a fresh login every time.
+      if (e.status === 401 || e.status === 403) {
+        clearTokens();
+        setStaff(null);
+      } else {
+        setError('Could not reach the server — retrying in the background.');
+      }
     } finally {
       setLoading(false);
     }

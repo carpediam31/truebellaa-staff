@@ -81,6 +81,27 @@ async function req(path, opts = {}, _retried = false) {
   return res.json();
 }
 
+// Like req(), but for multipart/form-data uploads — no Content-Type header
+// (the browser sets the multipart boundary itself) and no JSON body.
+async function upload(path, formData, _retried = false) {
+  const h = { 'X-Tenant-Slug': TENANT };
+  const token = getAccessToken();
+  if (token) h.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { method: 'POST', headers: h, body: formData });
+  if (res.status === 401 && !_retried && getRefreshToken()) {
+    const ok = await tryRefresh();
+    if (ok) return upload(path, formData, true);
+  }
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch { /* ignore */ }
+    const err = new Error(typeof detail === 'string' ? detail : 'Upload failed');
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
 export const api = {
   // ---- auth ----
   staffLogin: (email, password) =>
@@ -114,6 +135,23 @@ export const api = {
     }),
 
   // ---- catalog (Manager / Admin) ----
+  listProducts: () => req('/admin/products'),
+  createProduct: (payload) => req('/admin/products', { method: 'POST', body: JSON.stringify(payload) }),
+  updateProduct: (publicId, payload) =>
+    req(`/admin/products/${encodeURIComponent(publicId)}`, {
+      method: 'PATCH', body: JSON.stringify(payload),
+    }),
+  deleteProduct: (publicId) =>
+    req(`/admin/products/${encodeURIComponent(publicId)}`, { method: 'DELETE' }),
+  uploadProductImage: (publicId, file, { altText, isPrimary } = {}) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (altText) fd.append('alt_text', altText);
+    fd.append('is_primary', isPrimary ? 'true' : 'false');
+    return upload(`/admin/products/${encodeURIComponent(publicId)}/images`, fd);
+  },
+  deleteProductImage: (publicId, imageId) =>
+    req(`/admin/products/${encodeURIComponent(publicId)}/images/${imageId}`, { method: 'DELETE' }),
   listVariants: () => req('/admin/variants'),
   updatePrice: (sku, price) =>
     req(`/admin/variants/${encodeURIComponent(sku)}/price`, {
@@ -140,6 +178,34 @@ export const api = {
   listReviews: (status) => req(`/admin/reviews${status ? `?status=${status}` : ''}`),
   moderateReview: (id, status) =>
     req(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // ---- customers (shoppers, not staff) ----
+  listCustomers: (q) => req(`/admin/customers${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  customersSummary: () => req('/admin/customers/summary'),
+  getCustomer: (publicId) => req(`/admin/customers/${encodeURIComponent(publicId)}`),
+  setCustomerStatus: (publicId, status) =>
+    req(`/admin/customers/${encodeURIComponent(publicId)}/status`, {
+      method: 'PATCH', body: JSON.stringify({ status }),
+    }),
+
+  // ---- runtime settings (Admin) ----
+  listSettings: () => req('/admin/settings'),
+  updateSettings: (values) => req('/admin/settings', { method: 'PUT', body: JSON.stringify({ values }) }),
+
+  // ---- email templates (Admin) ----
+  listEmailTemplates: () => req('/admin/email-templates'),
+  updateEmailTemplate: (code, payload) =>
+    req(`/admin/email-templates/${encodeURIComponent(code)}`, {
+      method: 'PUT', body: JSON.stringify(payload),
+    }),
+  previewEmailTemplate: (code, payload) =>
+    req(`/admin/email-templates/${encodeURIComponent(code)}/preview`, {
+      method: 'POST', body: JSON.stringify(payload || null),
+    }),
+  testSendEmailTemplate: (code, payload) =>
+    req(`/admin/email-templates/${encodeURIComponent(code)}/test-send`, {
+      method: 'POST', body: JSON.stringify(payload),
+    }),
 
   // ---- audit ----
   activity: (limit = 50) => req(`/admin/activity?limit=${limit}`),
