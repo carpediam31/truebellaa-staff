@@ -165,6 +165,19 @@ export const api = {
 
   // ---- orders (Manager / Sales / Admin) ----
   listOrders: (status) => req(`/admin/orders${status ? `?status=${status}` : ''}`),
+  getOrder: (publicId) => req(`/admin/orders/${encodeURIComponent(publicId)}`),
+  setOrderStatus: (publicId, status, note) =>
+    req(`/admin/orders/${encodeURIComponent(publicId)}/status`, {
+      method: 'PATCH', body: JSON.stringify({ status, note }),
+    }),
+  cancelOrder: (publicId, note) =>
+    req(`/admin/orders/${encodeURIComponent(publicId)}/cancel`, {
+      method: 'POST', body: JSON.stringify({ note }),
+    }),
+  refundOrder: (publicId, note) =>
+    req(`/admin/orders/${encodeURIComponent(publicId)}/refund`, {
+      method: 'POST', body: JSON.stringify({ note }),
+    }),
   shipOrder: (publicId) => req(`/admin/orders/${encodeURIComponent(publicId)}/ship`, { method: 'POST' }),
 
   // ---- marketing / sales ----
